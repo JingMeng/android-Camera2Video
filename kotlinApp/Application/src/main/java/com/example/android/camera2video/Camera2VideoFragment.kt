@@ -38,10 +38,10 @@ import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v4.content.ContextCompat.checkSelfPermission
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.core.content.ContextCompat.checkSelfPermission
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
@@ -248,7 +248,7 @@ class Camera2VideoFragment : Fragment(), View.OnClickListener,
     private fun startBackgroundThread() {
         backgroundThread = HandlerThread("CameraBackground")
         backgroundThread?.start()
-        backgroundHandler = Handler(backgroundThread?.looper)
+        backgroundHandler = Handler(checkNotNull(backgroundThread).looper)
     }
 
     /**
@@ -339,7 +339,7 @@ class Camera2VideoFragment : Fragment(), View.OnClickListener,
             val characteristics = manager.getCameraCharacteristics(cameraId)
             val map = characteristics.get(SCALER_STREAM_CONFIGURATION_MAP) ?:
                     throw RuntimeException("Cannot get available preview/video sizes")
-            sensorOrientation = characteristics.get(SENSOR_ORIENTATION)
+            sensorOrientation = characteristics.get(SENSOR_ORIENTATION) ?: 0
             videoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder::class.java))
             previewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture::class.java),
                     width, height, videoSize)
@@ -391,7 +391,7 @@ class Camera2VideoFragment : Fragment(), View.OnClickListener,
 
         try {
             closePreviewSession()
-            val texture = textureView.surfaceTexture
+            val texture = textureView.surfaceTexture ?: return
             texture.setDefaultBufferSize(previewSize.width, previewSize.height)
             previewRequestBuilder = cameraDevice!!.createCaptureRequest(TEMPLATE_PREVIEW)
 
@@ -515,7 +515,7 @@ class Camera2VideoFragment : Fragment(), View.OnClickListener,
         try {
             closePreviewSession()
             setUpMediaRecorder()
-            val texture = textureView.surfaceTexture.apply {
+            val texture = (textureView.surfaceTexture ?: return).apply {
                 setDefaultBufferSize(previewSize.width, previewSize.height)
             }
 
